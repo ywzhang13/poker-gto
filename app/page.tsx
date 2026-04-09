@@ -14,25 +14,30 @@ import {
   needsVillain,
 } from '@/lib/gto-data';
 
+const scenarioNames: Record<Scenario, string> = {
+  rfi: 'Open Raise',
+  '3bet': '3-Bet',
+  vs3bet: 'vs 3-Bet',
+  '4bet': '4-Bet',
+  vs4bet: 'vs 4-Bet',
+  '5bet': '5-Bet All-in',
+};
+
 export default function Home() {
   const [scenario, setScenario] = useState<Scenario>('rfi');
   const [hero, setHero] = useState<Position>('UTG');
   const [villain, setVillain] = useState<Position>('UTG');
 
   const showVillain = needsVillain(scenario);
-
-  // Available hero positions (all for most scenarios)
   const heroPositions = POSITIONS;
 
-  // Available villain positions depend on scenario + hero
   const villainPositions = useMemo(
     () => (showVillain ? getVillainPositions(scenario, hero) : []),
     [scenario, hero, showVillain],
   );
 
-  // Auto-select first valid villain when hero/scenario changes
   const effectiveVillain = useMemo(() => {
-    if (!showVillain) return hero; // RFI uses hero=villain
+    if (!showVillain) return hero;
     if (villainPositions.includes(villain)) return villain;
     return villainPositions[0] ?? hero;
   }, [showVillain, villainPositions, villain, hero]);
@@ -42,20 +47,20 @@ export default function Home() {
     [scenario, hero, effectiveVillain],
   );
 
-  // Scenario descriptions
-  const scenarioDesc: Record<Scenario, string> = {
-    rfi: 'Open raise range from selected position',
-    '3bet': `3-Bet range from ${hero} vs opener`,
-    vs3bet: `${hero} opens, facing 3-bet from ${effectiveVillain}`,
-    '4bet': `4-Bet range from ${hero} vs 3-bettor`,
-    vs4bet: `${hero} 3-bets, facing 4-bet from ${effectiveVillain}`,
-    '5bet': `5-Bet all-in range from ${hero}`,
-  };
+  // Count raise/call/fold/allin hands
+  const stats = useMemo(() => {
+    if (!range) return null;
+    const counts = { raise: 0, call: 0, fold: 0, allin: 0, mixed: 0 };
+    Object.values(range).forEach((ha) => {
+      if (!ha) { counts.fold++; return; }
+      counts[ha.action]++;
+    });
+    return counts;
+  }, [range]);
 
-  // Labels for hero / villain depending on scenario
   const heroLabel = (() => {
     switch (scenario) {
-      case 'rfi': return 'Pos';
+      case 'rfi': return '位置';
       case '3bet': return 'Hero';
       case 'vs3bet': return 'Opener';
       case '4bet': return 'Hero';
@@ -66,58 +71,83 @@ export default function Home() {
 
   const villainLabel = (() => {
     switch (scenario) {
-      case '3bet': return 'Opener';
-      case 'vs3bet': return '3-Bettor';
-      case '4bet': return '3-Bettor';
-      case 'vs4bet': return '4-Bettor';
-      case '5bet': return '4-Bettor';
+      case '3bet': return 'vs Opener';
+      case 'vs3bet': return 'vs 3-Bettor';
+      case '4bet': return 'vs 3-Bettor';
+      case 'vs4bet': return 'vs 4-Bettor';
+      case '5bet': return 'vs 4-Bettor';
       default: return 'Villain';
     }
   })();
 
   return (
-    <div className="flex flex-col flex-1 bg-[#020617] min-h-screen">
+    <div className="flex flex-col min-h-screen bg-[#020617]">
       {/* Header */}
-      <header className="px-4 pt-4 pb-2">
-        <h1 className="text-lg font-bold text-[#F8FAFC] tracking-tight">
-          Poker GTO <span className="text-[#64748B] font-normal text-sm">Preflop Chart</span>
-        </h1>
+      <header className="px-4 sm:px-6 pt-4 pb-3 border-b border-[#1E293B]">
+        <div className="max-w-4xl mx-auto flex items-baseline gap-3">
+          <h1 className="text-xl sm:text-2xl font-bold text-[#F8FAFC] tracking-tight">
+            Poker GTO
+          </h1>
+          <span className="text-[#64748B] text-sm">6-Max 100bb 翻前策略表</span>
+        </div>
       </header>
 
       {/* Controls */}
-      <div className="px-4 space-y-3 pb-3">
-        <ScenarioTabs selected={scenario} onChange={setScenario} />
+      <div className="px-4 sm:px-6 py-4 border-b border-[#1E293B] bg-[#0F172A]/50">
+        <div className="max-w-4xl mx-auto space-y-3">
+          <ScenarioTabs selected={scenario} onChange={setScenario} />
 
-        <PositionSelector
-          label={heroLabel}
-          positions={heroPositions}
-          selected={hero}
-          onChange={setHero}
-        />
+          <div className="flex flex-wrap gap-4 items-start">
+            <PositionSelector
+              label={heroLabel}
+              positions={heroPositions}
+              selected={hero}
+              onChange={setHero}
+            />
 
-        {showVillain && villainPositions.length > 0 && (
-          <PositionSelector
-            label={villainLabel}
-            positions={villainPositions}
-            selected={effectiveVillain}
-            onChange={setVillain}
-          />
-        )}
+            {showVillain && villainPositions.length > 0 && (
+              <PositionSelector
+                label={villainLabel}
+                positions={villainPositions}
+                selected={effectiveVillain}
+                onChange={setVillain}
+              />
+            )}
+          </div>
 
-        <p className="text-[11px] text-[#64748B]">{scenarioDesc[scenario]}</p>
+          {/* Scenario description + stats */}
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-[#64748B]">
+              {scenarioNames[scenario]} — {hero}{showVillain ? ` vs ${effectiveVillain}` : ''}
+            </p>
+            {stats && (
+              <div className="flex gap-3 text-[10px] sm:text-xs">
+                {stats.raise > 0 && <span className="text-[#22C55E]">Raise {stats.raise}</span>}
+                {stats.call > 0 && <span className="text-[#3B82F6]">Call {stats.call}</span>}
+                {stats.allin > 0 && <span className="text-[#8B5CF6]">All-in {stats.allin}</span>}
+                {stats.mixed > 0 && <span className="text-[#EAB308]">Mixed {stats.mixed}</span>}
+                <span className="text-[#EF4444]/60">Fold {stats.fold}</span>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* Matrix */}
-      <div className="flex-1 px-2 sm:px-4 pb-2">
-        <HandMatrix range={range} />
+      {/* Matrix — full width */}
+      <div className="flex-1 px-2 sm:px-6 py-4">
+        <div className="max-w-4xl mx-auto">
+          <HandMatrix range={range} />
+        </div>
       </div>
 
       {/* Legend */}
-      <div className="px-4 py-3 border-t border-[#1E293B]">
-        <Legend />
-        <p className="text-center text-[9px] text-[#475569] mt-2">
-          Tap any cell for details &middot; 6-max 100bb NL
-        </p>
+      <div className="px-4 sm:px-6 py-3 border-t border-[#1E293B] bg-[#0F172A]/50">
+        <div className="max-w-4xl mx-auto">
+          <Legend />
+          <p className="text-center text-[10px] text-[#475569] mt-2">
+            點擊格子查看詳細策略 · 基於 6-Max 100bb NL Solver
+          </p>
+        </div>
       </div>
     </div>
   );

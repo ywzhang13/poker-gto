@@ -24,16 +24,15 @@ function cellBg(ha: HandAction | undefined): string {
 }
 
 function cellOpacity(ha: HandAction | undefined): number {
-  if (!ha) return 0.15;
-  if (ha.action === 'fold') return 0.15;
+  if (!ha) return 0.18;
+  if (ha.action === 'fold') return 0.18;
   if (ha.action === 'mixed') {
-    // opacity based on non-fold portion
     const nonFold = ha.mixedActions?.filter((a) => a.action !== 'fold')
       .reduce((s, a) => s + a.frequency, 0) ?? 50;
-    return 0.3 + (nonFold / 100) * 0.7;
+    return 0.35 + (nonFold / 100) * 0.65;
   }
   const f = ha.frequency ?? 100;
-  return 0.3 + (f / 100) * 0.7;
+  return 0.35 + (f / 100) * 0.65;
 }
 
 export default function HandMatrix({ range }: Props) {
@@ -43,67 +42,63 @@ export default function HandMatrix({ range }: Props) {
   if (!range) {
     return (
       <div className="flex items-center justify-center h-64 text-[#64748B] text-sm">
-        Select a valid position combination
+        請選擇有效的位置組合
       </div>
     );
   }
 
   return (
     <>
-      <div className="w-full overflow-x-auto">
-        <div
-          className="grid gap-[1px] mx-auto"
-          style={{
-            gridTemplateColumns: `repeat(14, minmax(0, 1fr))`,
-            maxWidth: '100%',
-            width: 'fit-content',
-            minWidth: '340px',
-          }}
-        >
-          {/* header row */}
-          <div className="w-full" />
+      <div className="w-full">
+        {/* Column headers */}
+        <div className="grid gap-[2px]" style={{ gridTemplateColumns: `28px repeat(13, 1fr)` }}>
+          <div />
           {RANKS.map((r) => (
-            <div
-              key={`h-${r}`}
-              className="flex items-center justify-center text-[9px] sm:text-[10px] font-bold text-[#64748B] h-5"
-            >
+            <div key={`h-${r}`} className="text-center text-[11px] sm:text-sm font-bold text-[#94A3B8] py-1">
               {r}
             </div>
           ))}
-
-          {/* matrix rows */}
-          {matrix.map((row, ri) => (
-            <Fragment key={`row-${ri}`}>
-              {/* row label */}
-              <div
-                className="flex items-center justify-center text-[9px] sm:text-[10px] font-bold text-[#64748B]"
-              >
-                {RANKS[ri]}
-              </div>
-              {row.map((cell) => {
-                const ha = range[cell.name];
-                const bg = cellBg(ha);
-                const opacity = cellOpacity(ha);
-                return (
-                  <button
-                    key={cell.name}
-                    onClick={() => setSelected({ hand: cell.name, action: ha ?? null })}
-                    className="aspect-square flex items-center justify-center rounded-[2px] sm:rounded transition-transform active:scale-90 cursor-pointer"
-                    style={{
-                      backgroundColor: bg,
-                      opacity,
-                    }}
-                    title={cell.name}
-                  >
-                    <span className="text-[7px] sm:text-[9px] font-semibold text-white leading-none select-none mix-blend-difference">
-                      {cell.name}
-                    </span>
-                  </button>
-                );
-              })}
-            </Fragment>
-          ))}
         </div>
+
+        {/* Matrix rows */}
+        {matrix.map((row, ri) => (
+          <div
+            key={`row-${ri}`}
+            className="grid gap-[2px]"
+            style={{ gridTemplateColumns: `28px repeat(13, 1fr)` }}
+          >
+            {/* Row label */}
+            <div className="flex items-center justify-center text-[11px] sm:text-sm font-bold text-[#94A3B8]">
+              {RANKS[ri]}
+            </div>
+
+            {/* Cells */}
+            {row.map((cell) => {
+              const ha = range[cell.name];
+              const bg = cellBg(ha);
+              const opacity = cellOpacity(ha);
+              const isMixed = ha?.action === 'mixed';
+              return (
+                <button
+                  key={cell.name}
+                  onClick={() => setSelected({ hand: cell.name, action: ha ?? null })}
+                  className="aspect-square flex items-center justify-center rounded-sm sm:rounded cursor-pointer
+                             transition-all duration-100 active:scale-90 hover:ring-2 hover:ring-white/40 hover:z-10
+                             relative overflow-hidden"
+                  style={{ backgroundColor: bg, opacity }}
+                >
+                  {/* Mixed indicator: split diagonal */}
+                  {isMixed && (
+                    <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-black/20" />
+                  )}
+                  <span className="text-[8px] sm:text-[11px] md:text-xs font-bold text-white leading-none select-none drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)] relative z-[1]">
+                    {cell.name}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        ))}
       </div>
 
       {selected && (
