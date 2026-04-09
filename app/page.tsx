@@ -15,12 +15,12 @@ import {
 } from '@/lib/gto-data';
 
 const scenarioNames: Record<Scenario, string> = {
-  rfi: 'Open Raise',
-  '3bet': '3-Bet',
-  vs3bet: 'vs 3-Bet',
-  '4bet': '4-Bet',
-  vs4bet: 'vs 4-Bet',
-  '5bet': '5-Bet All-in',
+  rfi: 'Open Raise 開牌範圍',
+  '3bet': '3-Bet / Cold Call 防守範圍',
+  vs3bet: '面對 3-Bet 的回應',
+  '4bet': '4-Bet 範圍',
+  vs4bet: '面對 4-Bet 的回應',
+  '5bet': '5-Bet All-in 範圍',
 };
 
 export default function Home() {
@@ -143,7 +143,7 @@ export default function Home() {
       {/* Legend */}
       <div className="px-4 sm:px-6 py-3 border-t border-[#1E293B] bg-[#0F172A]/50">
         <div className="max-w-4xl mx-auto">
-          <Legend />
+          <Legend scenario={scenario} />
           <p className="text-center text-[10px] text-[#475569] mt-2">
             點擊格子查看詳細策略 · 基於 6-Max 100bb NL Solver
           </p>
