@@ -1,65 +1,124 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useMemo } from 'react';
+import ScenarioTabs from '@/components/ScenarioTabs';
+import PositionSelector from '@/components/PositionSelector';
+import HandMatrix from '@/components/HandMatrix';
+import Legend from '@/components/Legend';
+import {
+  type Scenario,
+  type Position,
+  POSITIONS,
+  getRange,
+  getVillainPositions,
+  needsVillain,
+} from '@/lib/gto-data';
 
 export default function Home() {
+  const [scenario, setScenario] = useState<Scenario>('rfi');
+  const [hero, setHero] = useState<Position>('UTG');
+  const [villain, setVillain] = useState<Position>('UTG');
+
+  const showVillain = needsVillain(scenario);
+
+  // Available hero positions (all for most scenarios)
+  const heroPositions = POSITIONS;
+
+  // Available villain positions depend on scenario + hero
+  const villainPositions = useMemo(
+    () => (showVillain ? getVillainPositions(scenario, hero) : []),
+    [scenario, hero, showVillain],
+  );
+
+  // Auto-select first valid villain when hero/scenario changes
+  const effectiveVillain = useMemo(() => {
+    if (!showVillain) return hero; // RFI uses hero=villain
+    if (villainPositions.includes(villain)) return villain;
+    return villainPositions[0] ?? hero;
+  }, [showVillain, villainPositions, villain, hero]);
+
+  const range = useMemo(
+    () => getRange(scenario, hero, effectiveVillain),
+    [scenario, hero, effectiveVillain],
+  );
+
+  // Scenario descriptions
+  const scenarioDesc: Record<Scenario, string> = {
+    rfi: 'Open raise range from selected position',
+    '3bet': `3-Bet range from ${hero} vs opener`,
+    vs3bet: `${hero} opens, facing 3-bet from ${effectiveVillain}`,
+    '4bet': `4-Bet range from ${hero} vs 3-bettor`,
+    vs4bet: `${hero} 3-bets, facing 4-bet from ${effectiveVillain}`,
+    '5bet': `5-Bet all-in range from ${hero}`,
+  };
+
+  // Labels for hero / villain depending on scenario
+  const heroLabel = (() => {
+    switch (scenario) {
+      case 'rfi': return 'Pos';
+      case '3bet': return 'Hero';
+      case 'vs3bet': return 'Opener';
+      case '4bet': return 'Hero';
+      case 'vs4bet': return '3-Bettor';
+      case '5bet': return 'Hero';
+    }
+  })();
+
+  const villainLabel = (() => {
+    switch (scenario) {
+      case '3bet': return 'Opener';
+      case 'vs3bet': return '3-Bettor';
+      case '4bet': return '3-Bettor';
+      case 'vs4bet': return '4-Bettor';
+      case '5bet': return '4-Bettor';
+      default: return 'Villain';
+    }
+  })();
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="flex flex-col flex-1 bg-[#020617] min-h-screen">
+      {/* Header */}
+      <header className="px-4 pt-4 pb-2">
+        <h1 className="text-lg font-bold text-[#F8FAFC] tracking-tight">
+          Poker GTO <span className="text-[#64748B] font-normal text-sm">Preflop Chart</span>
+        </h1>
+      </header>
+
+      {/* Controls */}
+      <div className="px-4 space-y-3 pb-3">
+        <ScenarioTabs selected={scenario} onChange={setScenario} />
+
+        <PositionSelector
+          label={heroLabel}
+          positions={heroPositions}
+          selected={hero}
+          onChange={setHero}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+
+        {showVillain && villainPositions.length > 0 && (
+          <PositionSelector
+            label={villainLabel}
+            positions={villainPositions}
+            selected={effectiveVillain}
+            onChange={setVillain}
+          />
+        )}
+
+        <p className="text-[11px] text-[#64748B]">{scenarioDesc[scenario]}</p>
+      </div>
+
+      {/* Matrix */}
+      <div className="flex-1 px-2 sm:px-4 pb-2">
+        <HandMatrix range={range} />
+      </div>
+
+      {/* Legend */}
+      <div className="px-4 py-3 border-t border-[#1E293B]">
+        <Legend />
+        <p className="text-center text-[9px] text-[#475569] mt-2">
+          Tap any cell for details &middot; 6-max 100bb NL
+        </p>
+      </div>
     </div>
   );
 }
