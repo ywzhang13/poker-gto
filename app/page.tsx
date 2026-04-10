@@ -16,8 +16,8 @@ import {
 
 const scenarioNames: Record<Scenario, string> = {
   rfi: 'Open Raise 開牌範圍',
-  '3bet': '3-Bet / Cold Call 防守範圍',
-  vs3bet: '面對 3-Bet 的回應',
+  '3bet': '面對 Open — 防守 (Call) / 3-Bet / Fold',
+  vs3bet: '你 Open 後被 3-Bet — 回應策略',
   '4bet': '4-Bet 範圍',
   vs4bet: '面對 4-Bet 的回應',
   '5bet': '5-Bet All-in 範圍',

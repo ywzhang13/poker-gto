@@ -12,7 +12,7 @@ const baseItems = [
 
 const scenarioHints: Record<Scenario, string> = {
   rfi: '綠色 = Open Raise，紅色 = 不開',
-  '3bet': '綠色 = 3-Bet，藍色 = Cold Call 防守，紅色 = 棄牌',
+  '3bet': '綠色 = 3-Bet 加注，藍色 = Call 跟注防守（含BB防守），紅色 = 棄牌',
   vs3bet: '綠色 = 4-Bet，藍色 = Call 防守，紅色 = 棄牌',
   '4bet': '綠色 = 4-Bet，藍色 = Call，紅色 = 棄牌',
   vs4bet: '綠色 = 5-Bet，藍色 = Call，紅色 = 棄牌',

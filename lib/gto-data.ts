@@ -17,12 +17,12 @@ export type Scenario = 'rfi' | '3bet' | 'vs3bet' | '4bet' | 'vs4bet' | '5bet';
 
 export const POSITIONS: Position[] = ['UTG', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
 export const SCENARIOS: { key: Scenario; label: string }[] = [
-  { key: 'rfi', label: 'RFI' },
-  { key: '3bet', label: '3-Bet' },
-  { key: 'vs3bet', label: 'vs 3-Bet' },
+  { key: 'rfi', label: 'Open' },
+  { key: '3bet', label: '防守/3B' },
+  { key: 'vs3bet', label: 'vs 3B' },
   { key: '4bet', label: '4-Bet' },
-  { key: 'vs4bet', label: 'vs 4-Bet' },
-  { key: '5bet', label: '5-Bet' },
+  { key: 'vs4bet', label: 'vs 4B' },
+  { key: '5bet', label: '5B AI' },
 ];
 
 // helpers
